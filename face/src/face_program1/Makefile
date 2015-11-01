@@ -13,7 +13,7 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET)
 
 debug: $(OBJS)
-	$(CC) $(CFLAGS) $(GFLAG) -o $(TARGET)
+	$(CC) $(CFLAGS) $(GFLAG) $(OBJS) -o $(TARGET)
 
 test_display:
 	./$(TARGET) $(IMAGEDIR)face1.bmp test.bmp

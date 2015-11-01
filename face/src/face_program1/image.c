@@ -5,6 +5,7 @@
 //*********************************************
 #include<stdio.h>
 #include<string.h>
+#include<stdlib.h>
 #include<math.h>
 #include"image.h"
 
@@ -13,6 +14,7 @@ Image *Read_Bmp(char *filename)
 {
   int i,j;
   int real_width;              //データ上の1行分のバイト数
+  int width_check, height_check;
   unsigned int width, height;  //画像の横と縦のピクセル数
   unsigned int color;          //何bitのBitmapファイルであるか
   FILE *fp;
@@ -34,10 +36,13 @@ Image *Read_Bmp(char *filename)
     return NULL;
   }
 
-  memcpy(&width, header_buf+18, sizeof(width));  //画像の見た目上の幅を取得
-  memcpy(&height, header_buf+22, sizeof(height));  //画像の高さを取得
+  memcpy(&width_check, header_buf+18, sizeof(width));  //画像の見た目上の幅を取得
+  memcpy(&height_check, header_buf+22, sizeof(height));  //画像の高さを取得
   memcpy(&color, header_buf+28, sizeof(unsigned int));//何bitのBMPであるかを取得
 
+  height = (unsigned int)(height_check < 0 ? -height_check : height_check);
+  width = (unsigned int)(width_check < 0 ? -width_check : width_check);
+ 
   //24bitでなければ終了
   if(color != 24){
     fprintf(stderr, "Error: %s is not 24bit color image", filename);
@@ -179,7 +184,7 @@ Image *Create_Image(int width, int height)
     return NULL;
   }
   if((img->data = (Rgb *)malloc(sizeof(Rgb)*width*height)) == NULL){
-    printf(stderr, "Allocation error\n");
+   fprintf(stderr, "Allocation error\n");
     free(img);
   }
   img->width = width;
@@ -233,7 +238,7 @@ Image *Change_Gray_Scale(Image *img)
 
 //bmpのImageを受け取って2値画像に変換する
 //成功すればポインタを返す
-Image *Change_Binary_Scale(Image *img)
+Image_Binary *Change_Binary_Scale(Image *img)
 {
   int i,j;
   unsigned char r,g,b;
@@ -241,7 +246,10 @@ Image *Change_Binary_Scale(Image *img)
   unsigned char y;  //2値
   unsigned int height = img->height;
   unsigned int width = img->width;
-
+  Image_Binary *binaryData;
+  
+  binaryData = malloc(sizeof(Image_Binary));
+  binaryData->binary = malloc(sizeof(unsigned char) * height * width);
   //imgのRGBを1pixelずつ読み取って2値に変換
   for(i=0; i<height; i++){
     for(j=0; j<width; j++){
@@ -253,12 +261,13 @@ Image *Change_Binary_Scale(Image *img)
       //2値画像に変換
       y = (r+g+b) / 3;
       y = (y > 128) ? 255 : 0;
-
-      Tame_Rgb(&(img->data[tmp]), y);  //RGB要素すべてに同じ値を入れる
+      binaryData->binary[tmp] = (y == 255) ? 1 : 0;
+      
+      //Tame_Rgb(&(img->data[tmp]), y);  //RGB要素すべてに同じ値を入れる
     }
   }
 
-  return img;
+  return(binaryData);
 }
 
 //座標(x1,y1)から座標(x2.y2)へ線を引く
@@ -298,8 +307,8 @@ int Draw_Line(Image *img, unsigned int x1, unsigned int y1, unsigned int x2, uns
     float a = (float)(y2-y1)/(x2-x1);  //2点間の直選の傾き
     float b = y1 - a*x1;  //2点間の直線の切片
     int t;  //xのパラメータ(小数点以下切り捨て)
-    for(y=sy; y<ly; y++){  //yに囲まれた範囲
-	for(x=sx; x<lx; x++){  //xに囲まれた範囲
+    for(y=sy; y<=ly; y++){  //yに囲まれた範囲
+	for(x=sx; x<=lx; x++){  //xに囲まれた範囲
 	  t = a*x + b;
 	  if(y == t){
 	    tmp = y*width+x;  //現在の走査位置
@@ -311,8 +320,8 @@ int Draw_Line(Image *img, unsigned int x1, unsigned int y1, unsigned int x2, uns
     }
   }
   else{  //x1=x2のとき
-    for(y=sy; y<ly; y++){  //yに囲まれた範囲
-	for(x=sx; x<lx; x++){  //xに囲まれた範囲
+    for(y=sy; y<=ly; y++){  //yに囲まれた範囲
+	for(x=sx; x<=lx; x++){  //xに囲まれた範囲
 	  tmp = y*width+x;  //現在の走査位置
 	  img->data[tmp].r = 0;
 	  img->data[tmp].b = 200;

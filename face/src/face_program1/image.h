@@ -45,7 +45,7 @@ void Free_Image(Image *img);
 Image *Change_Gray_Scale(Image *img);
 
 //bmpのImageを受け取って2値画像に変換する
-Image *Change_Binary_Scale(Image *img);
+Image_Binary *Change_Binary_Scale(Image *img);
 
 //座標(x1,y1)から座標(x2.y2)へ線を引く
 //成功すれば0、失敗すれば1を返す

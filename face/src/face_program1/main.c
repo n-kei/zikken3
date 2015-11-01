@@ -8,7 +8,10 @@
 #include<stdlib.h>
 #include<stdio.h>
 
-#define MODE_TEST
+#define ORIGIN_X 200
+#define END_X 200
+#define LENGTH_Y 550
+//#define MODE_TEST
 #define MODE_RUN
 
 #ifdef MODE_TEST
@@ -65,20 +68,45 @@ int main(int argc, char *argv[])  //(読み込みファイル名, 出力ファ�
   char *inputImageName;
   char *outputImageName;
   Image *colorImage;
+  Image_Binary *binaryData;
+  unsigned int i, j, tmp;
+  unsigned int head_x = 0;
+  unsigned int head_y = 0;
   
   if(argc != 3){
     fprintf(stderr, "Usage:program <inputfile> <outputfile>\n");
     exit(1);
   }
 
-  input_image = argv[1];
-  output_image = argv[2];
+  inputImageName = argv[1];
+  outputImageName = argv[2];
   
-  if((colorImage = Read_Bmp(input_image)) == NULL){
+  if((colorImage = Read_Bmp(inputImageName)) == NULL){
     exit(1);
   }
-
   
+  binaryData = Change_Binary_Scale(colorImage);
+  
+  for(i = 0; i < colorImage->height; i++) {
+    for(j = 0; j < colorImage->width; j++) {
+      tmp = (colorImage->height-i-1)*colorImage->width+j;  //現在の走査位置
+      if(binaryData->binary[tmp] == 0) {
+	head_y = i;
+	head_x = j;
+	break;
+      }
+    }
+    if(head_x && head_y)
+      break;
+  }
+  Draw_Line(colorImage, head_x - ORIGIN_X, head_y, head_x + END_X, head_y);
+  Draw_Line(colorImage, head_x - END_X, head_y + LENGTH_Y, head_x + END_X, head_y + LENGTH_Y);
+  Draw_Line(colorImage, head_x + END_X, head_y, head_x + END_X, head_y + LENGTH_Y);
+  Draw_Line(colorImage, head_x - ORIGIN_X, head_y, head_x - ORIGIN_X, head_y + LENGTH_Y);
+  
+  Write_Bmp(outputImageName, colorImage);
+  Free_Image(colorImage);
+
   return(0);
 }
 
